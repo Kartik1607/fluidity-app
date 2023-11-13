@@ -1,0 +1,101 @@
+.main {
+  min-height: 100vh;
+  background-color: #000000;
+  color: #838281;
+}
+
+.header {
+  width: 100%;
+  padding-top: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.logo {
+  margin-bottom: 40px;
+}
+
+.title {
+  font-size: 70px;
+}
+
+.description {
+  max-width: 968px;
+  line-height: 21.28px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.ldb__banner {
+  margin: 0 auto;
+  margin-top: 40px;
+  max-width: 767px;
+  padding: 10px 0 10px 0;
+  cursor: pointer;
+
+  border-radius: 64px;
+  border: 1px solid white;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  &_svg {
+    margin-right: 5px;
+  }
+}
+
+.ldb__banner:hover {
+  border-color: #e6c5e3;
+}
+
+.ldb__table {
+  max-width: 1069px;
+  border: 1px solid #f0f0f0;
+  border-radius: 15px;
+  margin: 0 auto;
+  margin-top: 73px;
+
+  &_header {
+    padding: 35px 47px 35px 47px;
+    display: flex;
+    justify-content: space-between;
+
+    &_title {
+      padding-bottom: 10px;
+    }
+  }
+
+  &_filters {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .ldb_table_time_filter {
+    text-decoration: underline;
+  }
+}
+
+.ldb__table_content {
+  width: 100%;
+  border-spacing: 0 0.25em;
+}
+
+.ldb__footer {
+  //  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  padding: 100px 64px 100px 64px;
+
+  &_btns {
+    display: flex;
+    gap: 30px;
+    align-items: center;
+
+    span {
+      border-bottom: 1px solid #838281;
+    }
+  }
+}
