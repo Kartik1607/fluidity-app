@@ -28,21 +28,21 @@ const DATA = [
     user: "user_1",
     tx: "tx",
     volume: 100,
-    yield: 10,
+    earned: 10,
   },
   {
     rank: "2",
     user: "user_2",
     tx: "tx",
     volume: 100,
-    yield: 10,
+    earned: 10,
   },
   {
     rank: "3",
     user: "user_3",
     tx: "tx",
     volume: 100,
-    yield: 10,
+    earned: 10,
   },
 ];
 
@@ -58,14 +58,10 @@ export default function Home() {
     { name: "YIELD EARNED (USD)" },
   ]);
 
-  const Table = () => {
-    return;
-  };
-
   const Row = ({ RowElement, index, className }: IRow & { index: number }) => {
     return (
       <motion.tr
-        className={className}
+        className={`${styles.table_row}`}
         key={`row-${index}`}
         variants={{
           enter: { opacity: [0, 1] },
@@ -84,8 +80,75 @@ export default function Home() {
     );
   };
 
+  const airdropRankRow = (data: any): IRow => {
+    //const { address } = useContext(FluidityFacadeContext);
+    const { user, rank, tx, volume, earned } = data;
+
+    return {
+      RowElement: ({ heading }: { heading: string }) => {
+        switch (heading) {
+          case "RANK":
+            return (
+              <td>
+                <Text prominent>{rank === -1 ? "???" : rank}</Text>
+              </td>
+            );
+          case "USER":
+            return (
+              <td>
+                <a target="_blank" href="/" rel="noreferrer">
+                  <Text prominent>{user}</Text>
+                </a>
+              </td>
+            );
+          case "#TX":
+            return (
+              <td>
+                <Text prominent>{tx}</Text>
+              </td>
+            );
+          case "VOLUME (USD)":
+            return (
+              <td>
+                <Text prominent>{volume}</Text>
+              </td>
+            );
+          case "YIELD EARNED (USD)":
+            return (
+              <td>
+                <Text prominent>{earned}</Text>
+              </td>
+            );
+          default:
+            return <></>;
+        }
+      },
+    };
+  };
+
   return (
     <main className={styles.main}>
+      <Image
+        src="./red.svg"
+        alt="Red spot"
+        width={914}
+        height={450}
+        className={styles.red_spot}
+      />
+      <Image
+        src="./blue.svg"
+        alt="Blue spot"
+        width={1033}
+        height={602}
+        className={styles.blue_spot}
+      />
+      <Image
+        src="./white.svg"
+        alt="White spot"
+        width={401}
+        height={784}
+        className={styles.white_spot}
+      />
       <div className={styles.header}>
         <div className={styles.logo}>
           <Image
@@ -135,7 +198,7 @@ export default function Home() {
         <div className={styles.ldb__table_header}>
           <div>
             <div className={styles.ldb__table_header_title}>
-              <Heading as="h3">Leaderboard</Heading>
+              <Heading as="h1">Leaderboard</Heading>
             </div>
             <Text prominent>
               This leaderboard shows your rank among other users
@@ -213,13 +276,13 @@ export default function Home() {
               </thead>
 
               {/* Table Body */}
-              {/*<AnimatePresence mode="wait" initial={false}>
+              <AnimatePresence mode="wait" initial={false}>
                 <motion.tbody
-                  key={`page-${page}`}
+                  //  key={`page-${page}`}
                   initial="enter"
-                  animate={
-                    isTransition.state === "idle" ? "enter" : "transitioning"
-                  }
+                  //  animate={
+                  //    isTransition.state === "idle" ? "enter" : "transitioning"
+                  //  }
                   exit="exit"
                   variants={{
                     enter: {
@@ -238,20 +301,24 @@ export default function Home() {
                     },
                     transitioning: {},
                   }}
-                >*/}
-              {/* Frozen Rows */}
-              {/*{frozenRows.map((row, i) => (
+                >
+                  {/* Frozen Rows */}
+                  {/*{frozenRows.map((row, i) => (
                 <Row index={i} key={i} {...renderRow(row)} />
               ))}*/}
-              {/* Unfrozen Rows */}
-              {data
-                //.filter((_) => !freezeRow?.(_))
-                .map((row, i) => (
-                  <div key={i}>{row.rank}</div>
-                  //  <Row index={i} key={i} {...renderRow(row)} />
-                ))}
-              {/*</motion.tbody>
-              </AnimatePresence>*/}
+                  {/* Unfrozen Rows */}
+                  {data
+                    //.filter((_) => !freezeRow?.(_))
+                    .map((row, i) => (
+                      <Row
+                        index={i}
+                        key={i}
+                        {...airdropRankRow(row)}
+                        className={styles.row}
+                      />
+                    ))}
+                </motion.tbody>
+              </AnimatePresence>
             </table>
           )}
         </div>

@@ -4,6 +4,24 @@
   color: #838281;
 }
 
+.red_spot {
+  position: absolute;
+  object-fit: cover;
+  right: 0;
+}
+
+.blue_spot {
+  position: absolute;
+  top: 498px;
+  left: 0;
+}
+
+.white_spot {
+  position: absolute;
+  top: 388px;
+  right: 0;
+}
+
 .header {
   width: 100%;
   padding-top: 100px;
@@ -32,6 +50,8 @@
   margin-top: 40px;
   max-width: 767px;
   padding: 10px 0 10px 0;
+  opacity: 50%;
+  background: #211c1c;
   cursor: pointer;
 
   border-radius: 64px;
@@ -48,6 +68,8 @@
 
 .ldb__banner:hover {
   border-color: #e6c5e3;
+  opacity: 100%;
+  background-color: transparent;
 }
 
 .ldb__table {
@@ -81,6 +103,55 @@
 .ldb__table_content {
   width: 100%;
   border-spacing: 0 0.25em;
+}
+
+.ldb__table_content > thead > tr.highlighted_row,
+.ldb__table_content > tbody > tr.table_row.highlighted_row {
+  background: linear-gradient(
+    90deg,
+    #f3b8d8 0%,
+    #b793e9 15.1%,
+    #9fd4f3 26.04%,
+    #ffd2c4 36.46%,
+    #fbf3f3 46.88%,
+    #d9abdf 57.29%,
+    #af9ce3 72.4%,
+    #aae4e1 85.42%,
+    #c6ead0 93.23%,
+    #fdb5e4 100%
+  );
+  opacity: 20%;
+}
+
+.ldb__table_content > tbody > tr > td {
+  background-color: #ffffff0d;
+  padding: 1em 0.5em;
+}
+
+.ldb__table_content > thead > tr th:first-child,
+.ldb__table_content > thead > tr td:first-child,
+.ldb__table_content > tbody > tr.table_row th:first-child,
+.ldb__table_content > tbody > tr.table_row td:first-child {
+  padding-left: 4em;
+}
+
+.ldb__table_content > thead > tr td,
+.ldb__table_content > tbody > tr.table_row td {
+  background-color: transparent !important;
+  border-bottom: 1px solid white;
+}
+
+.ldb__table_content > thead > tr th,
+.ldb__table_content > thead > tr td,
+.ldb__table_content > tbody > tr.table_row th,
+.ldb__table_content > tbody > tr.table_row td {
+  padding-left: 2em;
+  padding-right: 2em;
+}
+
+.ldb__table_content > thead > tr:last-of-type td,
+.ldb__table_content > tbody > tr.table_row:last-of-type td {
+  border-bottom: none !important;
 }
 
 .ldb__footer {
