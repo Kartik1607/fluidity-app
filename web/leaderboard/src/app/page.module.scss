@@ -1,25 +1,33 @@
+// Mono
+$black: #000000;
+$white: #ffffff;
+$gray: #999999;
+
 .main {
   min-height: 100vh;
-  background-color: #000000;
-  color: #838281;
+  background-color: $black;
+  color: $gray;
 }
 
 .red_spot {
   position: absolute;
   object-fit: cover;
   right: 0;
+  z-index: 10;
 }
 
 .blue_spot {
   position: absolute;
   top: 498px;
   left: 0;
+  z-index: 10;
 }
 
 .white_spot {
   position: absolute;
   top: 388px;
   right: 0;
+  z-index: 10;
 }
 
 .header {
@@ -28,14 +36,19 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  z-index: 20;
+  position: relative;
 }
 
 .logo {
-  margin-bottom: 40px;
+  margin-bottom: 28px;
 }
 
 .title {
   font-size: 70px;
+  color: $white;
+  margin-bottom: 13px;
+  text-align: center;
 }
 
 .description {
@@ -43,19 +56,32 @@
   line-height: 21.28px;
   font-size: 14px;
   text-align: center;
+  letter-spacing: -2%;
+
+  &_highlited {
+    color: $white;
+    font-weight: 700;
+  }
+
+  &_learn {
+    color: $white;
+    border-bottom: 1px solid $white;
+  }
 }
 
 .ldb__banner {
   margin: 0 auto;
-  margin-top: 40px;
+  margin-top: 60px;
   max-width: 767px;
   padding: 10px 0 10px 0;
   opacity: 50%;
   background: #211c1c;
   cursor: pointer;
+  z-index: 20;
+  position: relative;
 
   border-radius: 64px;
-  border: 1px solid white;
+  border: 1px solid $white;
 
   display: flex;
   justify-content: center;
@@ -64,35 +90,91 @@
   &_svg {
     margin-right: 5px;
   }
+
+  &_arrow {
+    visibility: hidden;
+  }
 }
 
 .ldb__banner:hover {
   border-color: #e6c5e3;
   opacity: 100%;
   background-color: transparent;
+
+  &_arrow {
+    visibility: visible;
+    fill: $white;
+  }
 }
 
 .ldb__table {
   max-width: 1069px;
-  border: 1px solid #f0f0f0;
+  border: 1px solid $white;
   border-radius: 15px;
   margin: 0 auto;
   margin-top: 73px;
+  z-index: 20;
+  position: relative;
+  color: $white;
+  margin-bottom: 52px;
 
   &_header {
-    padding: 35px 47px 35px 47px;
+    padding: 35px 47px 0px 47px;
+    margin-bottom: 20px;
     display: flex;
     justify-content: space-between;
 
     &_title {
       padding-bottom: 10px;
     }
+
+    &_btn {
+      border: 1px solid $gray;
+      border-radius: 46px;
+      background-color: transparent;
+      color: $gray;
+      width: 108px;
+      padding: 7px 0 7px 0;
+      text-align: center;
+    }
+
+    &_filters {
+      display: flex;
+      flex-direction: column;
+      flex-grow: 0.4;
+      align-items: flex-end;
+      justify-content: space-between;
+      font-size: 14px;
+
+      &_btns {
+        display: flex;
+        justify-content: space-between;
+        width: 75%;
+      }
+
+      &_sorting {
+        display: flex;
+        justify-content: space-between;
+        width: 50%;
+        padding-top: 40px;
+      }
+
+      &_sort {
+        color: $gray;
+      }
+
+      &_lists {
+        background-color: transparent;
+        border: none;
+        color: $white;
+        border-bottom: 1px solid $white;
+      }
+    }
   }
 
-  &_filters {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+  .btn_highlited {
+    color: $white;
+    border: 2px solid $white;
   }
 
   .ldb_table_time_filter {
@@ -103,6 +185,13 @@
 .ldb__table_content {
   width: 100%;
   border-spacing: 0 0.25em;
+
+  &_heading {
+    color: $gray;
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 21px;
+  }
 }
 
 .ldb__table_content > thead > tr.highlighted_row,
@@ -133,12 +222,13 @@
 .ldb__table_content > tbody > tr.table_row th:first-child,
 .ldb__table_content > tbody > tr.table_row td:first-child {
   padding-left: 4em;
+  text-align: left;
 }
 
 .ldb__table_content > thead > tr td,
 .ldb__table_content > tbody > tr.table_row td {
   background-color: transparent !important;
-  border-bottom: 1px solid white;
+  border-bottom: 1px solid $white;
 }
 
 .ldb__table_content > thead > tr th,
@@ -147,6 +237,7 @@
 .ldb__table_content > tbody > tr.table_row td {
   padding-left: 2em;
   padding-right: 2em;
+  text-align: left;
 }
 
 .ldb__table_content > thead > tr:last-of-type td,
@@ -155,10 +246,11 @@
 }
 
 .ldb__footer {
-  //  width: 100%;
   display: flex;
   justify-content: space-between;
   padding: 100px 64px 100px 64px;
+  z-index: 20;
+  position: relative;
 
   &_btns {
     display: flex;

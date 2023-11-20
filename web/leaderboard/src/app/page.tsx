@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import styles from "./page.module.scss";
@@ -8,15 +8,30 @@ import {
   Text,
   GeneralButton,
   Heading,
-  Display,
-  CaretRight,
   ArrowTopRight,
-  ProviderIcon,
-  ArrowRight,
-  LoadingDots,
-  Socials,
 } from "@fluidity-money/surfing";
-import { LinkButton } from "@fluidity-money/surfing";
+import Socials from "./components/Socials";
+
+import { Client, cacheExchange, fetchExchange, gql } from "urql";
+
+const APIURL =
+  "https://gateway-arbitrum.network.thegraph.com/api/f9ffa86b5ab1229ce9b91179448a0891/subgraphs/id/CdS3475tZUcWVHsecnELJxBEGXV8nrbe5h3VmCbhe9qd";
+
+const query = gql`
+  query {
+    approvals {
+      id
+      owner
+      spender
+      value
+    }
+  }
+`;
+
+const client = new Client({
+  url: APIURL,
+  exchanges: [cacheExchange, fetchExchange],
+});
 
 export type IRow = React.HTMLAttributes<HTMLDivElement> & {
   RowElement: React.FC<{ heading: string }>;
@@ -57,6 +72,14 @@ export default function Home() {
     { name: "VOLUME (USD)" },
     { name: "YIELD EARNED (USD)" },
   ]);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+  async function fetchData() {
+    const response = await client.query(query).toPromise();
+    console.log("response:", response);
+  }
 
   const Row = ({ RowElement, index, className }: IRow & { index: number }) => {
     return (
@@ -165,19 +188,19 @@ export default function Home() {
           </Heading>
         </div>
         <div className={styles.description}>
-          <Display color={"gray"} size="xxs">
+          <Text className={styles.description_highlited}>
             Step into the Fluidity Arena!{" "}
-          </Display>{" "}
-          {/*<Heading className={styles.title}>
-            Step into the Fluidity Arena!{" "}
-          </Heading>*/}
-          <Text prominent>
+          </Text>{" "}
+          <Text>
             Compete in our Leaderboard Challenge by transacting with ƒluid
             Assets on-chain. Rise in ranks, earn your bragging rights, and claim
             exclusive rewards. Each week brings a new opportunity — Dive in,
-            explore, and may the best ƒluider win! LEARN MORE
-            <ArrowTopRight />
+            explore, and may the best ƒluider win!{" "}
           </Text>
+          <span>
+            <Text className={styles.description_learn}>LEARN MORE</Text>
+            <ArrowTopRight />
+          </span>
         </div>
       </div>
 
@@ -191,14 +214,17 @@ export default function Home() {
         />
 
         <Text>
-          Weekly Challenge: Top Volume Contributors Win Extra Rewards!
+          Weekly Challenge: Top Volume Contributors Win Extra Rewards!{" "}
+          <ArrowTopRight className={styles.ldb__banner_arrow} />
         </Text>
       </div>
       <div className={styles.ldb__table}>
         <div className={styles.ldb__table_header}>
           <div>
             <div className={styles.ldb__table_header_title}>
-              <Heading as="h1">Leaderboard</Heading>
+              <Heading as="h1" color="white">
+                Leaderboard
+              </Heading>
             </div>
             <Text prominent>
               This leaderboard shows your rank among other users
@@ -213,32 +239,48 @@ export default function Home() {
             </Text>
           </div>
           <div className={styles.ldb__table_header_filters}>
-            <div>
+            <div className={styles.ldb__table_header_filters_btns}>
               <GeneralButton
-                type={filterIndex === 0 ? "secondary" : "transparent"}
                 handleClick={() => setFilterIndex(0)}
+                className={
+                  filterIndex === 0
+                    ? `${styles.ldb__table_header_btn} ${styles.btn_highlited}`
+                    : `${styles.ldb__table_header_btn}`
+                }
               >
                 <Text code size="sm">
                   24 HOURS
                 </Text>
               </GeneralButton>
               <GeneralButton
-                type={filterIndex === 1 ? "secondary" : "transparent"}
                 handleClick={() => setFilterIndex(1)}
+                className={
+                  filterIndex === 0
+                    ? `${styles.ldb__table_header_btn}`
+                    : `${styles.ldb__table_header_btn} ${styles.btn_highlited}`
+                }
               >
                 <Text code size="sm">
                   ALL TIME
                 </Text>
               </GeneralButton>
             </div>
-            <div>
-              <Text>SORT BY:</Text>
+            <div className={styles.ldb__table_header_filters_sorting}>
+              <Text className={styles.ldb__table_header_filters_sort}>
+                SORT BY:
+              </Text>
               <GeneralButton
                 type="transparent"
-                //icon={<ArrowRight />}
                 onClick={() => console.log("rank")}
+                className={styles.ldb__table_header_filters_lists}
               >
-                RANK
+                RANK{" "}
+                <Image
+                  src="./arrowDownWhite.svg"
+                  alt="Arrow right"
+                  width={10}
+                  height={10}
+                />
               </GeneralButton>
             </div>
           </div>
@@ -268,7 +310,9 @@ export default function Home() {
                   {filteredHeadings.map((heading) => {
                     return (
                       <th key={heading.name}>
-                        <Text>{heading.name}</Text>
+                        <Text className={styles.ldb__table_content_heading}>
+                          {heading.name}
+                        </Text>
                       </th>
                     );
                   })}
@@ -279,7 +323,7 @@ export default function Home() {
               <AnimatePresence mode="wait" initial={false}>
                 <motion.tbody
                   //  key={`page-${page}`}
-                  initial="enter"
+                  //  initial="enter"
                   //  animate={
                   //    isTransition.state === "idle" ? "enter" : "transitioning"
                   //  }
@@ -325,6 +369,7 @@ export default function Home() {
       </div>
 
       <Socials />
+
       <div className={styles.ldb__footer}>
         <div>
           <Text as="p" size="xs">
@@ -332,7 +377,6 @@ export default function Home() {
           </Text>
         </div>
         <div className={styles.ldb__footer_btns}>
-          {/*<LinkButton size="xs">Terms</LinkButton>*/}
           <Text size="xs">Terms</Text>
           <Text size="xs">Privacy policy</Text>
           <Text size="xs">© 2023 Fluidity Money. All Rights Reserved.</Text>
