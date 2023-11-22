@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import styles from "./page.module.scss";
@@ -11,6 +11,7 @@ import {
   ArrowTopRight,
 } from "@fluidity-money/surfing";
 import Socials from "./components/Socials";
+import Table from "./components/Table";
 
 import { Client, cacheExchange, fetchExchange, gql } from "urql";
 
@@ -73,6 +74,8 @@ export default function Home() {
     { name: "YIELD EARNED (USD)" },
   ]);
 
+  const [userAddress, setUserAddress] = useState();
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -81,46 +84,31 @@ export default function Home() {
     console.log("response:", response);
   }
 
-  const Row = ({ RowElement, index, className }: IRow & { index: number }) => {
-    return (
-      <motion.tr
-        className={`${styles.table_row}`}
-        key={`row-${index}`}
-        variants={{
-          enter: { opacity: [0, 1] },
-          ready: { opacity: 1 },
-          exit: { opacity: 0 },
-          transitioning: {
-            opacity: [0.75, 1, 0.75],
-            transition: { duration: 1.5, repeat: Infinity },
-          },
-        }}
-      >
-        {filteredHeadings.map(({ name }) => (
-          <RowElement heading={name} key={name} />
-        ))}
-      </motion.tr>
-    );
-  };
-
   const airdropRankRow = (data: any): IRow => {
-    //const { address } = useContext(FluidityFacadeContext);
+    //const { address } = useContext();
+    const { address } = "string";
     const { user, rank, tx, volume, earned } = data;
 
     return {
+      className: `${address === user ? styles.highlited : styles.table_row}`,
       RowElement: ({ heading }: { heading: string }) => {
         switch (heading) {
           case "RANK":
             return (
               <td>
-                <Text prominent>{rank === -1 ? "???" : rank}</Text>
+                <Text>{rank === -1 ? "???" : rank}</Text>
               </td>
             );
           case "USER":
             return (
               <td>
                 <a target="_blank" href="/" rel="noreferrer">
-                  <Text prominent>{user}</Text>
+                  <Text prominent>
+                    {
+                      address === user ? "ME" : user
+                      //  trimAddress(user)
+                    }
+                  </Text>
                 </a>
               </td>
             );
@@ -184,7 +172,8 @@ export default function Home() {
 
         <div>
           <Heading className={styles.title}>
-            Fluidity Leaderboard Competition
+            Fluidity Leaderboard{" "}
+            <span className={styles.light}>Competition</span>
           </Heading>
         </div>
         <div className={styles.description}>
@@ -198,66 +187,58 @@ export default function Home() {
             explore, and may the best ƒluider win!{" "}
           </Text>
           <span>
-            <Text className={styles.description_learn}>LEARN MORE</Text>
+            <Text className={styles.description_learn}>LEARN MORE</Text>{" "}
             <ArrowTopRight />
           </span>
         </div>
       </div>
 
-      <div className={styles.ldb__banner}>
-        <Image
-          src="./prise.svg"
-          alt="Prise"
-          width={20}
-          height={24}
-          className={styles.ldb__banner_svg}
-        />
+      <div className={styles.banner}>
+        <Image src="./prise.svg" alt="Prise" width={20} height={24} />
 
         <Text>
           Weekly Challenge: Top Volume Contributors Win Extra Rewards!{" "}
-          <ArrowTopRight className={styles.ldb__banner_arrow} />
+          <ArrowTopRight className={styles.banner_arrow} />
         </Text>
       </div>
-      <div className={styles.ldb__table}>
-        <div className={styles.ldb__table_header}>
+      <div className={styles.table}>
+        <div className={styles.table_header}>
           <div>
-            <div className={styles.ldb__table_header_title}>
+            <div className={styles.title}>
               <Heading as="h1" color="white">
                 Leaderboard
               </Heading>
             </div>
-            <Text prominent>
+            <Text>
               This leaderboard shows your rank among other users
               {filterIndex === 0 ? " per" : " for"}
               &nbsp;
               {filterIndex === 0 ? (
-                <span className={styles.ldb_table_time_filter}>24 HOURS</span>
+                <span className={styles.time_filter}>24 HOURS</span>
               ) : (
-                <span className={styles.ldb_table_time_filter}>ALL TIME</span>
+                <span className={styles.time_filter}>ALL TIME</span>
               )}
               .
             </Text>
           </div>
-          <div className={styles.ldb__table_header_filters}>
-            <div className={styles.ldb__table_header_filters_btns}>
+          <div className={styles.filters}>
+            <div className={styles.btns}>
               <GeneralButton
                 handleClick={() => setFilterIndex(0)}
                 className={
                   filterIndex === 0
-                    ? `${styles.ldb__table_header_btn} ${styles.btn_highlited}`
-                    : `${styles.ldb__table_header_btn}`
+                    ? `${styles.btn} ${styles.btn_highlited}`
+                    : `${styles.btn}`
                 }
               >
-                <Text code size="sm">
-                  24 HOURS
-                </Text>
+                <Text size="sm">24 HOURS</Text>
               </GeneralButton>
               <GeneralButton
                 handleClick={() => setFilterIndex(1)}
                 className={
                   filterIndex === 0
-                    ? `${styles.ldb__table_header_btn}`
-                    : `${styles.ldb__table_header_btn} ${styles.btn_highlited}`
+                    ? `${styles.btn}`
+                    : `${styles.btn} ${styles.btn_highlited}`
                 }
               >
                 <Text code size="sm">
@@ -265,14 +246,12 @@ export default function Home() {
                 </Text>
               </GeneralButton>
             </div>
-            <div className={styles.ldb__table_header_filters_sorting}>
-              <Text className={styles.ldb__table_header_filters_sort}>
-                SORT BY:
-              </Text>
+            <div className={styles.filters_sorting}>
+              <Text className={styles.sorted_by}>SORT BY:</Text>
               <GeneralButton
                 type="transparent"
                 onClick={() => console.log("rank")}
-                className={styles.ldb__table_header_filters_lists}
+                className={styles.sorting_list}
               >
                 RANK{" "}
                 <Image
@@ -286,7 +265,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className={styles.ldb__table_wrapper}>
+        <div>
           {data.length === 0 ? (
             !loaded ? (
               <>
@@ -303,80 +282,38 @@ export default function Home() {
               </>
             )
           ) : (
-            <table className={styles.ldb__table_content}>
-              {/* Table Headings */}
-              <thead>
-                <tr>
-                  {filteredHeadings.map((heading) => {
-                    return (
-                      <th key={heading.name}>
-                        <Text className={styles.ldb__table_content_heading}>
-                          {heading.name}
-                        </Text>
-                      </th>
-                    );
-                  })}
-                </tr>
-              </thead>
-
-              {/* Table Body */}
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.tbody
-                  //  key={`page-${page}`}
-                  //  initial="enter"
-                  //  animate={
-                  //    isTransition.state === "idle" ? "enter" : "transitioning"
-                  //  }
-                  exit="exit"
-                  variants={{
-                    enter: {
-                      opacity: 1,
-                      transition: {
-                        when: "beforeChildren",
-                        staggerChildren: 0.05,
-                      },
-                    },
-                    exit: {
-                      opacity: 0,
-                      transition: {
-                        when: "afterChildren",
-                        staggerChildren: 0.05,
-                      },
-                    },
-                    transitioning: {},
-                  }}
-                >
-                  {/* Frozen Rows */}
-                  {/*{frozenRows.map((row, i) => (
-                <Row index={i} key={i} {...renderRow(row)} />
-              ))}*/}
-                  {/* Unfrozen Rows */}
-                  {data
-                    //.filter((_) => !freezeRow?.(_))
-                    .map((row, i) => (
-                      <Row
-                        index={i}
-                        key={i}
-                        {...airdropRankRow(row)}
-                        className={styles.row}
-                      />
-                    ))}
-                </motion.tbody>
-              </AnimatePresence>
-            </table>
+            <Table
+              itemName=""
+              headings={filteredHeadings}
+              pagination={{
+                paginate: false,
+                page: 1,
+                rowsPerPage: 11,
+              }}
+              count={0}
+              data={data}
+              renderRow={(data) => airdropRankRow(data)}
+              freezeRow={(data) => {
+                return data.user === userAddress;
+              }}
+              onFilter={() => true}
+              activeFilterIndex={0}
+              filters={[]}
+              //  loaded={loaded}
+            />
           )}
         </div>
       </div>
 
       <Socials />
 
-      <div className={styles.ldb__footer}>
+      <div className={styles.footer}>
         <div>
           <Text as="p" size="xs">
             Fluidity Money 2023
           </Text>
         </div>
-        <div className={styles.ldb__footer_btns}>
+        <div className={styles.btns}>
           <Text size="xs">Terms</Text>
           <Text size="xs">Privacy policy</Text>
           <Text size="xs">© 2023 Fluidity Money. All Rights Reserved.</Text>
