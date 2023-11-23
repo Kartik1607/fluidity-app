@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useContext } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useEnsName, useAccount, useConnect, useDisconnect } from "wagmi";
 import Image from "next/image";
 import styles from "./page.module.scss";
 import {
@@ -75,6 +76,7 @@ export default function Home() {
   ]);
 
   const [userAddress, setUserAddress] = useState();
+  const { address, connector, isConnected } = useAccount();
 
   useEffect(() => {
     fetchData();
@@ -83,6 +85,12 @@ export default function Home() {
     const response = await client.query(query).toPromise();
     console.log("response:", response);
   }
+
+  const ensName = useEnsName({
+    address: "0xdd94018f54e565dbfc939f7c44a16e163faab331",
+  });
+
+  console.log(ensName.data);
 
   const airdropRankRow = (data: any): IRow => {
     //const { address } = useContext();
