@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEnsName, useAccount, useConnect, useDisconnect } from "wagmi";
 import Image from "next/image";
@@ -10,9 +10,15 @@ import {
   GeneralButton,
   Heading,
   ArrowTopRight,
+  useClickOutside,
 } from "@fluidity-money/surfing";
 import Socials from "./components/Socials";
 import Table from "./components/Table";
+import Footer from "./components/Footer";
+import { DropdownOptions } from "./components/Dropdown";
+
+import { Transfer, AggregatedData, Data } from "./types";
+import { tableHeadings } from "./config";
 
 import { Client, cacheExchange, fetchExchange, gql } from "urql";
 
@@ -21,11 +27,14 @@ const APIURL =
 
 const query = gql`
   query {
-    approvals {
-      id
-      owner
-      spender
+    transfers {
       value
+      from
+      blockTimestamp
+    }
+    rewards {
+      amount
+      winner
     }
   }
 `;
@@ -39,58 +48,109 @@ export type IRow = React.HTMLAttributes<HTMLDivElement> & {
   RowElement: React.FC<{ heading: string }>;
 };
 
-const DATA = [
-  {
-    rank: "1",
-    user: "user_1",
-    tx: "tx",
-    volume: 100,
-    earned: 10,
-  },
-  {
-    rank: "2",
-    user: "user_2",
-    tx: "tx",
-    volume: 100,
-    earned: 10,
-  },
-  {
-    rank: "3",
-    user: "user_3",
-    tx: "tx",
-    volume: 100,
-    earned: 10,
-  },
-];
-
 export default function Home() {
   const [filterIndex, setFilterIndex] = useState(0);
-  const [data, setData] = useState(DATA);
   const [loaded, setLoaded] = useState();
-  const [filteredHeadings, usefilteredHeadings] = useState([
-    { name: "RANK" },
-    { name: "USER" },
-    { name: "#TX" },
-    { name: "VOLUME (USD)" },
-    { name: "YIELD EARNED (USD)" },
-  ]);
+
+  const [transfers, setTransfers] = useState([]);
+  const [rewards, setRewards] = useState([]);
 
   const [userAddress, setUserAddress] = useState();
   const { address, connector, isConnected } = useAccount();
 
+  const [openDropdown, setOpenDropdown] = useState(false);
+
+  const dropdownRef = useRef(null);
+  useClickOutside(dropdownRef, () => {
+    setTimeout(() => setOpenDropdown(false), 200);
+  });
+
+  const [sortedData, setSortedData] = useState<Data[]>([]);
+  const [sortedByItem, setSortedByItem] = useState("number of transactions");
+
+  function sortData(sortBy: string) {
+    switch (sortBy) {
+      case "volume":
+        const newSortedData = sortedData.sort(
+          (a, b) =>
+            parseInt(b.volume.replace(/,/g, ""), 10) -
+            parseInt(a.volume.replace(/,/g, ""), 10)
+        );
+        console.log("newSortedData", newSortedData);
+        setSortedData(newSortedData);
+        break;
+      case "rewards":
+        const newSortedDataEarned = sortedData.sort(
+          (a, b) =>
+            parseInt(b.earned.replace(/,/g, ""), 10) -
+            parseInt(a.earned.replace(/,/g, ""), 10)
+        );
+        setSortedData(newSortedDataEarned);
+        break;
+      default:
+        setSortedData(sortedData.sort((a, b) => b.tx - a.tx));
+    }
+  }
+
   useEffect(() => {
     fetchData();
   }, []);
+
   async function fetchData() {
     const response = await client.query(query).toPromise();
     console.log("response:", response);
+
+    setTransfers(response.data.transfers);
+    setRewards(response.data.rewards);
+
+    createNewArray(response.data.transfers, response.data.rewards);
+  }
+
+  function createNewArray(array1, array2) {
+    const newArr: AggregatedData = {};
+
+    array1.forEach(({ value, from }: Transfer) => {
+      const numericValue = parseInt(value, 10);
+      if (!newArr[from]) {
+        newArr[from] = {
+          volume: numericValue,
+          tx: 1,
+          earned: 0,
+          user: from,
+        };
+      } else {
+        newArr[from].volume += numericValue;
+        newArr[from].tx += 1;
+      }
+
+      for (let i = 0; i < array2.length; i++) {
+        if (newArr.user === array1[i].winner) {
+          const numericValue = parseInt(array2[i].amount, 10);
+          newArr[from].earned += numericValue;
+        } else {
+          console.log(`${array2[i]} is not found`);
+        }
+      }
+
+      const resultArray = Object.entries(newArr).map(
+        ([from, { volume, tx, user, earned }], index) => ({
+          user,
+          volume: volume.toLocaleString().replace(/\s/g, ","),
+          tx,
+          earned: earned.toLocaleString().replace(/\s/g, ","),
+          rank: index + 1,
+        })
+      );
+
+      const sortedResult = resultArray.sort((a, b) => b.tx - a.tx);
+
+      return setSortedData(sortedResult);
+    });
   }
 
   const ensName = useEnsName({
     address: "0xdd94018f54e565dbfc939f7c44a16e163faab331",
   });
-
-  console.log(ensName.data);
 
   const airdropRankRow = (data: any): IRow => {
     //const { address } = useContext();
@@ -219,9 +279,9 @@ export default function Home() {
             </div>
             <Text>
               This leaderboard shows your rank among other users
-              {filterIndex === 0 ? " per" : " for"}
+              {filterIndex === 1 ? " per" : " for"}
               &nbsp;
-              {filterIndex === 0 ? (
+              {filterIndex === 1 ? (
                 <span className={styles.time_filter}>24 HOURS</span>
               ) : (
                 <span className={styles.time_filter}>ALL TIME</span>
@@ -232,9 +292,9 @@ export default function Home() {
           <div className={styles.filters}>
             <div className={styles.btns}>
               <GeneralButton
-                handleClick={() => setFilterIndex(0)}
+                handleClick={() => setFilterIndex(1)}
                 className={
-                  filterIndex === 0
+                  filterIndex === 1
                     ? `${styles.btn} ${styles.btn_highlited}`
                     : `${styles.btn}`
                 }
@@ -242,9 +302,9 @@ export default function Home() {
                 <Text size="sm">24 HOURS</Text>
               </GeneralButton>
               <GeneralButton
-                handleClick={() => setFilterIndex(1)}
+                handleClick={() => setFilterIndex(0)}
                 className={
-                  filterIndex === 0
+                  filterIndex === 1
                     ? `${styles.btn}`
                     : `${styles.btn} ${styles.btn_highlited}`
                 }
@@ -256,25 +316,36 @@ export default function Home() {
             </div>
             <div className={styles.filters_sorting}>
               <Text className={styles.sorted_by}>SORT BY:</Text>
-              <GeneralButton
-                type="transparent"
-                onClick={() => console.log("rank")}
-                className={styles.sorting_list}
-              >
-                RANK{" "}
-                <Image
-                  src="./arrowDownWhite.svg"
-                  alt="Arrow right"
-                  width={10}
-                  height={10}
-                />
-              </GeneralButton>
+              <div ref={dropdownRef} className={styles.sorted_list}>
+                <GeneralButton
+                  type="transparent"
+                  onClick={() => {
+                    setOpenDropdown(!openDropdown);
+                    console.log("sortedData", sortedData);
+                  }}
+                  className={styles.btn}
+                >
+                  {sortedByItem}{" "}
+                  <Image
+                    src="./arrowDownWhite.svg"
+                    alt="Arrow right"
+                    width={10}
+                    height={10}
+                  />
+                </GeneralButton>
+                {openDropdown && (
+                  <DropdownOptions
+                    sortData={sortData}
+                    setSortedByItem={setSortedByItem}
+                  />
+                )}
+              </div>
             </div>
           </div>
         </div>
 
         <div>
-          {data.length === 0 ? (
+          {sortedData.length === 0 ? (
             !loaded ? (
               <>
                 Fetching table data...
@@ -292,14 +363,14 @@ export default function Home() {
           ) : (
             <Table
               itemName=""
-              headings={filteredHeadings}
+              headings={tableHeadings}
               pagination={{
                 paginate: false,
                 page: 1,
                 rowsPerPage: 11,
               }}
               count={0}
-              data={data}
+              data={sortedData}
               renderRow={(data) => airdropRankRow(data)}
               freezeRow={(data) => {
                 return data.user === userAddress;
@@ -315,18 +386,7 @@ export default function Home() {
 
       <Socials />
 
-      <div className={styles.footer}>
-        <div>
-          <Text as="p" size="xs">
-            Fluidity Money 2023
-          </Text>
-        </div>
-        <div className={styles.btns}>
-          <Text size="xs">Terms</Text>
-          <Text size="xs">Privacy policy</Text>
-          <Text size="xs">© 2023 Fluidity Money. All Rights Reserved.</Text>
-        </div>
-      </div>
+      <Footer />
     </main>
   );
 }

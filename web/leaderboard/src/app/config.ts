@@ -44,3 +44,11 @@ export const inter = localFont({
     },
   ],
 });
+
+export const tableHeadings = [
+  { name: "RANK" },
+  { name: "USER" },
+  { name: "#TX" },
+  { name: "VOLUME (USD)" },
+  { name: "YIELD EARNED (USD)" },
+];

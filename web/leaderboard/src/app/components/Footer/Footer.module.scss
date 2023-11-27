@@ -1,0 +1,17 @@
+.footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 100px 64px 100px 64px;
+  z-index: 20;
+  position: relative;
+
+  .btns {
+    display: flex;
+    gap: 30px;
+    align-items: center;
+
+    span {
+      border-bottom: 1px solid #838281;
+    }
+  }
+}

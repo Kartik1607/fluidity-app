@@ -104,23 +104,25 @@ const Table = <T,>(props: ITable<T>) => {
 
   const Row = ({ RowElement, index, className }: IRow & { index: number }) => {
     return (
-      <motion.tr
-        className={className}
-        key={`row-${index}`}
-        variants={{
-          enter: { opacity: [0, 1] },
-          ready: { opacity: 1 },
-          exit: { opacity: 0 },
-          transitioning: {
-            opacity: [0.75, 1, 0.75],
-            transition: { duration: 1.5, repeat: Infinity },
-          },
-        }}
-      >
+      //  <motion.tr
+      //    className={className}
+      //    key={`row-${index}`}
+      //    variants={{
+      //      enter: { opacity: [0, 1] },
+      //      ready: { opacity: 1 },
+      //      exit: { opacity: 0 },
+      //      transitioning: {
+      //        opacity: [0.75, 1, 0.75],
+      //        transition: { duration: 1.5, repeat: Infinity },
+      //      },
+      //    }}
+      //  >
+      <tr className={className}>
         {filteredHeadings.map(({ name }) => (
           <RowElement heading={name} key={name} />
         ))}
-      </motion.tr>
+        {/*</motion.tr>*/}
+      </tr>
     );
   };
 

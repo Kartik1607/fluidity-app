@@ -181,7 +181,16 @@ $gray: #999999;
           font-family: "Spline Sans Mono";
         }
 
-        .sorting_list {
+        .sorted_list {
+          position: relative;
+          z-index: 50;
+        }
+
+        .btn {
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.2em;
           background-color: transparent;
           border: none;
           color: $white;
@@ -253,22 +262,4 @@ $gray: #999999;
 .table_content > thead > tr:last-of-type td,
 .table_content > tbody > tr.table_row:last-of-type td {
   border-bottom: none !important;
-}
-
-.footer {
-  display: flex;
-  justify-content: space-between;
-  padding: 100px 64px 100px 64px;
-  z-index: 20;
-  position: relative;
-
-  .btns {
-    display: flex;
-    gap: 30px;
-    align-items: center;
-
-    span {
-      border-bottom: 1px solid #838281;
-    }
-  }
 }
