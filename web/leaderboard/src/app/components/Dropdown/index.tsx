@@ -8,10 +8,8 @@ const sortedBy = [
 ];
 
 export const DropdownOptions = ({
-  sortData,
   setSortedByItem,
 }: {
-  sortData: (value: string) => void;
   setSortedByItem: (value: string) => void;
 }) => {
   return (
@@ -23,8 +21,7 @@ export const DropdownOptions = ({
               className={styles.option}
               onClick={() => {
                 console.log(option);
-                sortData(option.name);
-                setSortedByItem(option.title);
+                setSortedByItem(option.name);
               }}
             >
               <Text size="xl" prominent={true}>

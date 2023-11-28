@@ -17,15 +17,17 @@ import Table from "./components/Table";
 import Footer from "./components/Footer";
 import { DropdownOptions } from "./components/Dropdown";
 
-import { Transfer, AggregatedData, Data } from "./types";
-import { tableHeadings } from "./config";
+import { Transfer, AggregatedData, Data, Reward } from "./types";
+import { tableHeadings, SORTED_ITEM } from "./config";
 
 import { Client, cacheExchange, fetchExchange, gql } from "urql";
+
+import { timestamp24HoursAgo } from "./utils";
 
 const APIURL =
   "https://gateway-arbitrum.network.thegraph.com/api/f9ffa86b5ab1229ce9b91179448a0891/subgraphs/id/CdS3475tZUcWVHsecnELJxBEGXV8nrbe5h3VmCbhe9qd";
 
-const query = gql`
+const queryAllTime = gql`
   query {
     transfers {
       value
@@ -33,6 +35,19 @@ const query = gql`
       blockTimestamp
     }
     rewards {
+      amount
+      winner
+    }
+  }
+`;
+
+const queryLast24hours = gql`
+  query {
+    transfers(where: { blockTimestamp_gte: ${String(timestamp24HoursAgo)} }) {
+      value
+      from
+    }
+    rewards(where: { blockNumber_gte: ${String(timestamp24HoursAgo)} }) {
       amount
       winner
     }
@@ -52,8 +67,8 @@ export default function Home() {
   const [filterIndex, setFilterIndex] = useState(0);
   const [loaded, setLoaded] = useState();
 
-  const [transfers, setTransfers] = useState([]);
-  const [rewards, setRewards] = useState([]);
+  const [allTimeData, setAllTimeData] = useState<Data[] | []>([]);
+  const [last24TimeData, setLast24TimeData] = useState<Data[] | []>([]);
 
   const [userAddress, setUserAddress] = useState();
   const { address, connector, isConnected } = useAccount();
@@ -66,21 +81,40 @@ export default function Home() {
   });
 
   const [sortedData, setSortedData] = useState<Data[]>([]);
-  const [sortedByItem, setSortedByItem] = useState("number of transactions");
+  const [sortedByItem, setSortedByItem] = useState<string>("number");
 
-  function sortData(sortBy: string) {
+  async function fetch24HoursData() {
+    const response = await client.query(queryLast24hours, {}).toPromise();
+    const data: Data[] = createNewArray(
+      response.data.transfers,
+      response.data.rewards
+    );
+    setLast24TimeData(data);
+  }
+
+  async function fetchAllTimeData() {
+    const response = await client.query(queryAllTime, {}).toPromise();
+    console.log("response:", response);
+
+    const data: Data[] = createNewArray(
+      response.data.transfers,
+      response.data.rewards
+    );
+    setAllTimeData(data);
+  }
+
+  function sortData(sortBy: string, data: Data[]) {
     switch (sortBy) {
       case "volume":
-        const newSortedData = sortedData.sort(
+        const newSortedData = data.sort(
           (a, b) =>
             parseInt(b.volume.replace(/,/g, ""), 10) -
             parseInt(a.volume.replace(/,/g, ""), 10)
         );
-        console.log("newSortedData", newSortedData);
         setSortedData(newSortedData);
         break;
       case "rewards":
-        const newSortedDataEarned = sortedData.sort(
+        const newSortedDataEarned = data.sort(
           (a, b) =>
             parseInt(b.earned.replace(/,/g, ""), 10) -
             parseInt(a.earned.replace(/,/g, ""), 10)
@@ -88,28 +122,22 @@ export default function Home() {
         setSortedData(newSortedDataEarned);
         break;
       default:
-        setSortedData(sortedData.sort((a, b) => b.tx - a.tx));
+        setSortedData(data.sort((a, b) => b.tx - a.tx));
     }
   }
 
   useEffect(() => {
-    fetchData();
+    fetchAllTimeData();
   }, []);
 
-  async function fetchData() {
-    const response = await client.query(query).toPromise();
-    console.log("response:", response);
+  useEffect(() => {
+    sortData(sortedByItem, sortedData);
+  }, [sortedByItem]);
 
-    setTransfers(response.data.transfers);
-    setRewards(response.data.rewards);
-
-    createNewArray(response.data.transfers, response.data.rewards);
-  }
-
-  function createNewArray(array1, array2) {
+  function createNewArray(transfers: Transfer[], rewards: Reward[]) {
     const newArr: AggregatedData = {};
 
-    array1.forEach(({ value, from }: Transfer) => {
+    transfers.forEach(({ value, from }: Transfer) => {
       const numericValue = parseInt(value, 10);
       if (!newArr[from]) {
         newArr[from] = {
@@ -122,39 +150,43 @@ export default function Home() {
         newArr[from].volume += numericValue;
         newArr[from].tx += 1;
       }
+    });
 
-      for (let i = 0; i < array2.length; i++) {
-        if (newArr.user === array1[i].winner) {
-          const numericValue = parseInt(array2[i].amount, 10);
-          newArr[from].earned += numericValue;
+    for (let key in newArr) {
+      for (let i = 0; i < rewards.length; i++) {
+        if (newArr[key].user === rewards[i].winner) {
+          const numericValue = parseInt(rewards[i].amount, 10);
+          newArr[key].earned += numericValue;
         } else {
-          console.log(`${array2[i]} is not found`);
+          console.log(`${rewards[i]} is not found`);
         }
       }
+    }
 
-      const resultArray = Object.entries(newArr).map(
-        ([from, { volume, tx, user, earned }], index) => ({
-          user,
-          volume: volume.toLocaleString().replace(/\s/g, ","),
-          tx,
-          earned: earned.toLocaleString().replace(/\s/g, ","),
-          rank: index + 1,
-        })
-      );
+    const resultArray: Data[] = Object.entries(newArr).map(
+      ([from, { volume, tx, user, earned }], index) => ({
+        user,
+        volume: volume.toLocaleString().replace(/\s/g, ","),
+        tx,
+        earned: earned.toLocaleString().replace(/\s/g, ","),
+        rank: index + 1,
+      })
+    );
 
-      const sortedResult = resultArray.sort((a, b) => b.tx - a.tx);
-
-      return setSortedData(sortedResult);
-    });
+    const sortedResult: Data[] = resultArray.sort((a, b) => b.tx - a.tx);
+    setSortedData(sortedResult);
+    return resultArray;
   }
 
   const ensName = useEnsName({
     address: "0xdd94018f54e565dbfc939f7c44a16e163faab331",
   });
 
+  //  console.log("ensName", ensName.data);
+
   const airdropRankRow = (data: any): IRow => {
     //const { address } = useContext();
-    const { address } = "string";
+    const address = "string";
     const { user, rank, tx, volume, earned } = data;
 
     return {
@@ -292,7 +324,10 @@ export default function Home() {
           <div className={styles.filters}>
             <div className={styles.btns}>
               <GeneralButton
-                handleClick={() => setFilterIndex(1)}
+                handleClick={() => {
+                  setFilterIndex(1);
+                  fetch24HoursData();
+                }}
                 className={
                   filterIndex === 1
                     ? `${styles.btn} ${styles.btn_highlited}`
@@ -302,7 +337,10 @@ export default function Home() {
                 <Text size="sm">24 HOURS</Text>
               </GeneralButton>
               <GeneralButton
-                handleClick={() => setFilterIndex(0)}
+                handleClick={() => {
+                  setFilterIndex(0);
+                  fetchAllTimeData();
+                }}
                 className={
                   filterIndex === 1
                     ? `${styles.btn}`
@@ -321,11 +359,10 @@ export default function Home() {
                   type="transparent"
                   onClick={() => {
                     setOpenDropdown(!openDropdown);
-                    console.log("sortedData", sortedData);
                   }}
                   className={styles.btn}
                 >
-                  {sortedByItem}{" "}
+                  {SORTED_ITEM[sortedByItem as keyof typeof SORTED_ITEM]}{" "}
                   <Image
                     src="./arrowDownWhite.svg"
                     alt="Arrow right"
@@ -334,10 +371,7 @@ export default function Home() {
                   />
                 </GeneralButton>
                 {openDropdown && (
-                  <DropdownOptions
-                    sortData={sortData}
-                    setSortedByItem={setSortedByItem}
-                  />
+                  <DropdownOptions setSortedByItem={setSortedByItem} />
                 )}
               </div>
             </div>
