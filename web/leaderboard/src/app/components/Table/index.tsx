@@ -104,25 +104,23 @@ const Table = <T,>(props: ITable<T>) => {
 
   const Row = ({ RowElement, index, className }: IRow & { index: number }) => {
     return (
-      //  <motion.tr
-      //    className={className}
-      //    key={`row-${index}`}
-      //    variants={{
-      //      enter: { opacity: [0, 1] },
-      //      ready: { opacity: 1 },
-      //      exit: { opacity: 0 },
-      //      transitioning: {
-      //        opacity: [0.75, 1, 0.75],
-      //        transition: { duration: 1.5, repeat: Infinity },
-      //      },
-      //    }}
-      //  >
-      <tr className={className}>
+      <motion.tr
+        className={className}
+        key={`row-${index}`}
+        variants={{
+          enter: { opacity: [0, 1] },
+          ready: { opacity: 1 },
+          exit: { opacity: 1 },
+          transitioning: {
+            opacity: [0.75, 1, 0.75],
+            transition: { duration: 1.5, repeat: Infinity },
+          },
+        }}
+      >
         {filteredHeadings.map(({ name }) => (
           <RowElement heading={name} key={name} />
         ))}
-        {/*</motion.tr>*/}
-      </tr>
+      </motion.tr>
     );
   };
 
@@ -163,12 +161,12 @@ const Table = <T,>(props: ITable<T>) => {
           <AnimatePresence mode="wait" initial={false}>
             <motion.tbody
               key={`page-${page}`}
-              initial="enter"
+              //  initial="enter"
               // TODO: need to think what to use instead of useTransition from remix
               //  animate={
               //    isTransition.state === "idle" ? "enter" : "transitioning"
               //  }
-              exit="exit"
+              //  exit="exit"
               variants={{
                 enter: {
                   opacity: 1,
@@ -178,7 +176,7 @@ const Table = <T,>(props: ITable<T>) => {
                   },
                 },
                 exit: {
-                  opacity: 0,
+                  opacity: 1,
                   transition: {
                     when: "afterChildren",
                     staggerChildren: 0.05,

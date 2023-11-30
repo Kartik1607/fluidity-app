@@ -22,7 +22,7 @@ export interface AggregatedData {
 
 export interface Data {
   rank?: number;
-  user: string;
+  user: Promise<any> | string;
   volume: string;
   tx: number;
   earned: string;

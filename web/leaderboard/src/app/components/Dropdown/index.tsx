@@ -9,8 +9,10 @@ const sortedBy = [
 
 export const DropdownOptions = ({
   setSortedByItem,
+  setOpenDropdown,
 }: {
   setSortedByItem: (value: string) => void;
+  setOpenDropdown: (value: boolean) => void;
 }) => {
   return (
     <div className={styles.dropdown_options}>
@@ -20,8 +22,8 @@ export const DropdownOptions = ({
             <button
               className={styles.option}
               onClick={() => {
-                console.log(option);
                 setSortedByItem(option.name);
+                setOpenDropdown(false);
               }}
             >
               <Text size="xl" prominent={true}>

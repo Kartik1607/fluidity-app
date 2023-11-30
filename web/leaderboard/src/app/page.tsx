@@ -3,6 +3,7 @@
 import { useState, useEffect, useContext, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEnsName, useAccount, useConnect, useDisconnect } from "wagmi";
+import { fetchEnsName } from "@wagmi/core";
 import Image from "next/image";
 import styles from "./page.module.scss";
 import {
@@ -70,7 +71,10 @@ export default function Home() {
   const [allTimeData, setAllTimeData] = useState<Data[] | []>([]);
   const [last24TimeData, setLast24TimeData] = useState<Data[] | []>([]);
 
-  const [userAddress, setUserAddress] = useState();
+  const [userAddress, setUserAddress] = useState(
+    "0x1cb94adfd3314d48ca8145b2c6983419257c0486"
+  );
+
   const { address, connector, isConnected } = useAccount();
 
   const [openDropdown, setOpenDropdown] = useState(false);
@@ -89,6 +93,8 @@ export default function Home() {
       response.data.transfers,
       response.data.rewards
     );
+
+    console.log(response);
     setLast24TimeData(data);
   }
 
@@ -165,7 +171,7 @@ export default function Home() {
 
     const resultArray: Data[] = Object.entries(newArr).map(
       ([from, { volume, tx, user, earned }], index) => ({
-        user,
+        user: receiveEnsName(from),
         volume: volume.toLocaleString().replace(/\s/g, ","),
         tx,
         earned: earned.toLocaleString().replace(/\s/g, ","),
@@ -178,19 +184,31 @@ export default function Home() {
     return resultArray;
   }
 
-  const ensName = useEnsName({
-    address: "0xdd94018f54e565dbfc939f7c44a16e163faab331",
-  });
+  const receiveEnsName = async (address: any) => {
+    try {
+      const ensName = await fetchEnsName({
+        address: address,
+        chainId: 1,
+      });
 
-  //  console.log("ensName", ensName.data);
+      if (ensName !== null) {
+        return ensName;
+      }
+
+      return address;
+    } catch (error) {
+      console.error("Error fetching ENS name:", error);
+    }
+  };
 
   const airdropRankRow = (data: any): IRow => {
-    //const { address } = useContext();
-    const address = "string";
+    const address = "0x1cb94adfd3314d48ca8145b2c6983419257c0486";
     const { user, rank, tx, volume, earned } = data;
 
     return {
-      className: `${address === user ? styles.highlited : styles.table_row}`,
+      className: `${
+        address === user.value ? styles.highlited : styles.table_row
+      }`,
       RowElement: ({ heading }: { heading: string }) => {
         switch (heading) {
           case "RANK":
@@ -205,7 +223,7 @@ export default function Home() {
                 <a target="_blank" href="/" rel="noreferrer">
                   <Text prominent>
                     {
-                      address === user ? "ME" : user
+                      address === user.value ? "ME" : user
                       //  trimAddress(user)
                     }
                   </Text>
@@ -371,7 +389,10 @@ export default function Home() {
                   />
                 </GeneralButton>
                 {openDropdown && (
-                  <DropdownOptions setSortedByItem={setSortedByItem} />
+                  <DropdownOptions
+                    setSortedByItem={setSortedByItem}
+                    setOpenDropdown={setOpenDropdown}
+                  />
                 )}
               </div>
             </div>

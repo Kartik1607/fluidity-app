@@ -2,11 +2,11 @@
 
 import * as React from "react";
 import { WagmiConfig, configureChains, createConfig } from "wagmi";
-import { arbitrum, mainnet } from "wagmi/chains";
+import { mainnet } from "wagmi/chains";
 import { publicProvider } from "wagmi/providers/public";
 
 const { chains, publicClient, webSocketPublicClient } = configureChains(
-  [arbitrum, mainnet],
+  [mainnet],
   [publicProvider()]
 );
 
