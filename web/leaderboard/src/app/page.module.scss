@@ -217,18 +217,17 @@ $gray: #999999;
 .table_content > tbody > tr.table_row.highlighted_row {
   background: linear-gradient(
     90deg,
-    #f3b8d8 0%,
-    #b793e9 15.1%,
-    #9fd4f3 26.04%,
-    #ffd2c4 36.46%,
-    #fbf3f3 46.88%,
-    #d9abdf 57.29%,
-    #af9ce3 72.4%,
-    #aae4e1 85.42%,
-    #c6ead0 93.23%,
-    #fdb5e4 100%
+    rgba(243, 184, 216, 20%) 0%,
+    rgba(183, 147, 233, 20%) 15.1%,
+    rgba(159, 212, 243, 20%) 26.04%,
+    rgba(255, 210, 196, 20%) 36.46%,
+    rgba(251, 243, 243, 20%) 46.88%,
+    rgba(217, 171, 223, 20%) 57.29%,
+    rgba(175, 156, 227, 20%) 72.4%,
+    rgba(170, 228, 225, 20%) 85.42%,
+    rgba(198, 234, 208, 20%) 93.23%,
+    rgba(253, 181, 228, 20%) 100%
   );
-  opacity: 20%;
 }
 
 .table_content > tbody > tr > td {

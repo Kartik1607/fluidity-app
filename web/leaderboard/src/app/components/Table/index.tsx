@@ -1,7 +1,7 @@
 import React, { ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { GeneralButton, LoadingDots, Text } from "@fluidity-money/surfing";
+import { LoadingDots, Text } from "@fluidity-money/surfing";
 import styles from "../../page.module.scss";
 
 type Filter<T> = {

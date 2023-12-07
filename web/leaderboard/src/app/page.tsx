@@ -1,9 +1,7 @@
 "use client";
 
-import { useState, useEffect, useContext, useRef } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { useEnsName, useAccount, useConnect, useDisconnect } from "wagmi";
-import { fetchEnsName } from "@wagmi/core";
+import { useState, useEffect, useContext, useRef, useCallback } from "react";
+import { useAccount, useConnect, useDisconnect, useEnsAvatar } from "wagmi";
 import Image from "next/image";
 import styles from "./page.module.scss";
 import {
@@ -12,53 +10,22 @@ import {
   Heading,
   ArrowTopRight,
   useClickOutside,
+  toSignificantDecimals,
 } from "@fluidity-money/surfing";
 import Socials from "./components/Socials";
 import Table from "./components/Table";
 import Footer from "./components/Footer";
 import { DropdownOptions } from "./components/Dropdown";
 
-import { Transfer, AggregatedData, Data, Reward } from "./types";
+import { Data } from "./types";
 import { tableHeadings, SORTED_ITEM } from "./config";
 
-import { Client, cacheExchange, fetchExchange, gql } from "urql";
+import {
+  useLeaderboardRanking24Hours,
+  useLeaderboardRankingAllTime,
+} from "./queries/useLeaderboardRanking";
 
-import { timestamp24HoursAgo } from "./utils";
-
-const APIURL =
-  "https://gateway-arbitrum.network.thegraph.com/api/f9ffa86b5ab1229ce9b91179448a0891/subgraphs/id/CdS3475tZUcWVHsecnELJxBEGXV8nrbe5h3VmCbhe9qd";
-
-const queryAllTime = gql`
-  query {
-    transfers {
-      value
-      from
-      blockTimestamp
-    }
-    rewards {
-      amount
-      winner
-    }
-  }
-`;
-
-const queryLast24hours = gql`
-  query {
-    transfers(where: { blockTimestamp_gte: ${String(timestamp24HoursAgo)} }) {
-      value
-      from
-    }
-    rewards(where: { blockNumber_gte: ${String(timestamp24HoursAgo)} }) {
-      amount
-      winner
-    }
-  }
-`;
-
-const client = new Client({
-  url: APIURL,
-  exchanges: [cacheExchange, fetchExchange],
-});
+import UseEnsName from "./ensName";
 
 export type IRow = React.HTMLAttributes<HTMLDivElement> & {
   RowElement: React.FC<{ heading: string }>;
@@ -68,8 +35,13 @@ export default function Home() {
   const [filterIndex, setFilterIndex] = useState(0);
   const [loaded, setLoaded] = useState();
 
+  const data24Hours = useLeaderboardRanking24Hours();
+  const dataAllTime = useLeaderboardRankingAllTime();
+
+  const [last24HoursTimeData, setLast24HoursTimeData] = useState<Data[] | []>(
+    []
+  );
   const [allTimeData, setAllTimeData] = useState<Data[] | []>([]);
-  const [last24TimeData, setLast24TimeData] = useState<Data[] | []>([]);
 
   const [userAddress, setUserAddress] = useState(
     "0x1cb94adfd3314d48ca8145b2c6983419257c0486"
@@ -87,127 +59,52 @@ export default function Home() {
   const [sortedData, setSortedData] = useState<Data[]>([]);
   const [sortedByItem, setSortedByItem] = useState<string>("number");
 
-  async function fetch24HoursData() {
-    const response = await client.query(queryLast24hours, {}).toPromise();
-    const data: Data[] = createNewArray(
-      response.data.transfers,
-      response.data.rewards
-    );
-
-    console.log(response);
-    setLast24TimeData(data);
-  }
-
-  async function fetchAllTimeData() {
-    const response = await client.query(queryAllTime, {}).toPromise();
-    console.log("response:", response);
-
-    const data: Data[] = createNewArray(
-      response.data.transfers,
-      response.data.rewards
-    );
-    setAllTimeData(data);
-  }
-
-  function sortData(sortBy: string, data: Data[]) {
-    switch (sortBy) {
-      case "volume":
-        const newSortedData = data.sort(
-          (a, b) =>
-            parseInt(b.volume.replace(/,/g, ""), 10) -
-            parseInt(a.volume.replace(/,/g, ""), 10)
-        );
-        setSortedData(newSortedData);
-        break;
-      case "rewards":
-        const newSortedDataEarned = data.sort(
-          (a, b) =>
-            parseInt(b.earned.replace(/,/g, ""), 10) -
-            parseInt(a.earned.replace(/,/g, ""), 10)
-        );
-        setSortedData(newSortedDataEarned);
-        break;
-      default:
-        setSortedData(data.sort((a, b) => b.tx - a.tx));
-    }
-  }
+  const sortData = useCallback(
+    (sortBy: string) => {
+      switch (sortBy) {
+        case "volume":
+          const newSortedData = sortedData.sort(
+            (a, b) => Number(b.volume) - Number(a.volume)
+          );
+          setSortedData(newSortedData);
+          break;
+        case "rewards":
+          const newSortedDataEarned = sortedData.sort(
+            (a, b) => Number(b.yield_earned) - Number(a.yield_earned)
+          );
+          setSortedData(newSortedDataEarned);
+          break;
+        default:
+          setSortedData(
+            sortedData.sort(
+              (a, b) => b.number_of_transactions - a.number_of_transactions
+            )
+          );
+      }
+    },
+    [sortedData]
+  );
 
   useEffect(() => {
-    fetchAllTimeData();
+    try {
+      data24Hours.then((res) => {
+        setLast24HoursTimeData(res.data.leaderboard_ranking);
+        setSortedData(res.data.leaderboard_ranking);
+      });
+      dataAllTime.then((res) => setAllTimeData(res.data.leaderboard_ranking));
+    } catch (error) {
+      console.log(error);
+    }
   }, []);
 
-  useEffect(() => {
-    sortData(sortedByItem, sortedData);
-  }, [sortedByItem]);
-
-  function createNewArray(transfers: Transfer[], rewards: Reward[]) {
-    const newArr: AggregatedData = {};
-
-    transfers.forEach(({ value, from }: Transfer) => {
-      const numericValue = parseInt(value, 10);
-      if (!newArr[from]) {
-        newArr[from] = {
-          volume: numericValue,
-          tx: 1,
-          earned: 0,
-          user: from,
-        };
-      } else {
-        newArr[from].volume += numericValue;
-        newArr[from].tx += 1;
-      }
-    });
-
-    for (let key in newArr) {
-      for (let i = 0; i < rewards.length; i++) {
-        if (newArr[key].user === rewards[i].winner) {
-          const numericValue = parseInt(rewards[i].amount, 10);
-          newArr[key].earned += numericValue;
-        } else {
-          console.log(`${rewards[i]} is not found`);
-        }
-      }
-    }
-
-    const resultArray: Data[] = Object.entries(newArr).map(
-      ([from, { volume, tx, user, earned }], index) => ({
-        user: receiveEnsName(from),
-        volume: volume.toLocaleString().replace(/\s/g, ","),
-        tx,
-        earned: earned.toLocaleString().replace(/\s/g, ","),
-        rank: index + 1,
-      })
-    );
-
-    const sortedResult: Data[] = resultArray.sort((a, b) => b.tx - a.tx);
-    setSortedData(sortedResult);
-    return resultArray;
-  }
-
-  const receiveEnsName = async (address: any) => {
-    try {
-      const ensName = await fetchEnsName({
-        address: address,
-        chainId: 1,
-      });
-
-      if (ensName !== null) {
-        return ensName;
-      }
-
-      return address;
-    } catch (error) {
-      console.error("Error fetching ENS name:", error);
-    }
-  };
-
   const airdropRankRow = (data: any): IRow => {
-    const address = "0x1cb94adfd3314d48ca8145b2c6983419257c0486";
-    const { user, rank, tx, volume, earned } = data;
+    const addressUser = "0x1cb94adfd3314d48ca8145b2c6983419257c0486";
+    const { address, rank, number_of_transactions, volume, yield_earned } =
+      data;
 
     return {
-      className: `${
-        address === user.value ? styles.highlited : styles.table_row
+      className: `${styles.table_row} ${
+        addressUser === address ? styles.highlighted_row : ""
       }`,
       RowElement: ({ heading }: { heading: string }) => {
         switch (heading) {
@@ -222,10 +119,11 @@ export default function Home() {
               <td>
                 <a target="_blank" href="/" rel="noreferrer">
                   <Text prominent>
-                    {
-                      address === user.value ? "ME" : user
-                      //  trimAddress(user)
-                    }
+                    {addressUser === address ? (
+                      "ME"
+                    ) : (
+                      <UseEnsName address={address} />
+                    )}
                   </Text>
                 </a>
               </td>
@@ -233,19 +131,19 @@ export default function Home() {
           case "#TX":
             return (
               <td>
-                <Text prominent>{tx}</Text>
+                <Text prominent>{number_of_transactions}</Text>
               </td>
             );
           case "VOLUME (USD)":
             return (
               <td>
-                <Text prominent>{volume}</Text>
+                <Text prominent>{toSignificantDecimals(volume, 1)}</Text>
               </td>
             );
           case "YIELD EARNED (USD)":
             return (
               <td>
-                <Text prominent>{earned}</Text>
+                <Text prominent>{toSignificantDecimals(yield_earned, 3)}</Text>
               </td>
             );
           default:
@@ -329,9 +227,9 @@ export default function Home() {
             </div>
             <Text>
               This leaderboard shows your rank among other users
-              {filterIndex === 1 ? " per" : " for"}
+              {filterIndex === 0 ? " per" : " for"}
               &nbsp;
-              {filterIndex === 1 ? (
+              {filterIndex === 0 ? (
                 <span className={styles.time_filter}>24 HOURS</span>
               ) : (
                 <span className={styles.time_filter}>ALL TIME</span>
@@ -343,11 +241,12 @@ export default function Home() {
             <div className={styles.btns}>
               <GeneralButton
                 handleClick={() => {
-                  setFilterIndex(1);
-                  fetch24HoursData();
+                  setFilterIndex(0);
+                  setSortedData(last24HoursTimeData);
+                  setSortedByItem("number");
                 }}
                 className={
-                  filterIndex === 1
+                  filterIndex === 0
                     ? `${styles.btn} ${styles.btn_highlited}`
                     : `${styles.btn}`
                 }
@@ -356,11 +255,12 @@ export default function Home() {
               </GeneralButton>
               <GeneralButton
                 handleClick={() => {
-                  setFilterIndex(0);
-                  fetchAllTimeData();
+                  setFilterIndex(1);
+                  setSortedData(allTimeData);
+                  setSortedByItem("number");
                 }}
                 className={
-                  filterIndex === 1
+                  filterIndex === 0
                     ? `${styles.btn}`
                     : `${styles.btn} ${styles.btn_highlited}`
                 }
@@ -392,6 +292,7 @@ export default function Home() {
                   <DropdownOptions
                     setSortedByItem={setSortedByItem}
                     setOpenDropdown={setOpenDropdown}
+                    sortData={sortData}
                   />
                 )}
               </div>
@@ -428,7 +329,7 @@ export default function Home() {
               data={sortedData}
               renderRow={(data) => airdropRankRow(data)}
               freezeRow={(data) => {
-                return data.user === userAddress;
+                return data.address === userAddress;
               }}
               onFilter={() => true}
               activeFilterIndex={0}

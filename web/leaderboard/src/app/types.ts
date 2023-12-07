@@ -1,15 +1,3 @@
-export interface Transfer {
-  value: string;
-  from: string;
-  __typename: string;
-}
-
-export interface Reward {
-  amount: string;
-  winner: string;
-  __typename: string;
-}
-
 export interface AggregatedData {
   [from: string]: {
     rank?: number;
@@ -22,8 +10,8 @@ export interface AggregatedData {
 
 export interface Data {
   rank?: number;
-  user: Promise<any> | string;
-  volume: string;
-  tx: number;
-  earned: string;
+  address: string;
+  volume: string | number;
+  number_of_transactions: number;
+  yield_earned: string;
 }

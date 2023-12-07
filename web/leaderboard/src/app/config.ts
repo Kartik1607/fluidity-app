@@ -54,7 +54,7 @@ export const tableHeadings = [
 ];
 
 export enum SORTED_ITEM {
-  volume = "volume transacted",
-  rewards = "rewards earned",
-  number = "number of transactions",
+  volume = "VOLUME",
+  rewards = "REWARDS",
+  number = "#TX",
 }
