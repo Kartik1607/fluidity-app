@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect, useContext, useRef, useCallback } from "react";
+import { useQuery } from "@apollo/client";
 import { useAccount, useConnect, useDisconnect, useEnsAvatar } from "wagmi";
+import { useChainContext } from "./queries/ChainContext";
 import Image from "next/image";
 import styles from "./page.module.scss";
 import {
@@ -21,8 +23,8 @@ import { Data } from "./types";
 import { tableHeadings, SORTED_ITEM } from "./config";
 
 import {
-  useLeaderboardRanking24Hours,
-  useLeaderboardRankingAllTime,
+  queryLeaderboardRanking24Hours,
+  queryLeaderboardRankingAllTime,
 } from "./queries/useLeaderboardRanking";
 
 import UseEnsName from "./ensName";
@@ -35,17 +37,32 @@ export default function Home() {
   const [filterIndex, setFilterIndex] = useState(0);
   const [loaded, setLoaded] = useState();
 
-  const data24Hours = useLeaderboardRanking24Hours();
-  const dataAllTime = useLeaderboardRankingAllTime();
+  const { apiState, network } = useChainContext();
+  console.log("ranking", apiState.leaderboardRanking);
+  console.log("network", network);
 
-  const [last24HoursTimeData, setLast24HoursTimeData] = useState<Data[] | []>(
-    []
-  );
-  const [allTimeData, setAllTimeData] = useState<Data[] | []>([]);
+  const {
+    loading: loading24Hours,
+    error: error24Hours,
+    data: data24Hours,
+  } = useQuery(queryLeaderboardRanking24Hours);
+
+  const {
+    loading: loadingAllTime,
+    error: errorAllTime,
+    data: dataAllTime,
+  } = useQuery(queryLeaderboardRankingAllTime);
 
   const [userAddress, setUserAddress] = useState(
     "0x1cb94adfd3314d48ca8145b2c6983419257c0486"
   );
+
+  const [sortedData, setSortedData] = useState<Data[]>([]);
+  const [sortedByItem, setSortedByItem] = useState<string>("number");
+
+  useEffect(() => {
+    loading24Hours === false && setSortedData(data24Hours.leaderboard_ranking);
+  }, [loading24Hours]);
 
   const { address, connector, isConnected } = useAccount();
 
@@ -55,9 +72,6 @@ export default function Home() {
   useClickOutside(dropdownRef, () => {
     setTimeout(() => setOpenDropdown(false), 200);
   });
-
-  const [sortedData, setSortedData] = useState<Data[]>([]);
-  const [sortedByItem, setSortedByItem] = useState<string>("number");
 
   const sortData = useCallback(
     (sortBy: string) => {
@@ -84,18 +98,6 @@ export default function Home() {
     },
     [sortedData]
   );
-
-  useEffect(() => {
-    try {
-      data24Hours.then((res) => {
-        setLast24HoursTimeData(res.data.leaderboard_ranking);
-        setSortedData(res.data.leaderboard_ranking);
-      });
-      dataAllTime.then((res) => setAllTimeData(res.data.leaderboard_ranking));
-    } catch (error) {
-      console.log(error);
-    }
-  }, []);
 
   const airdropRankRow = (data: any): IRow => {
     const addressUser = "0x1cb94adfd3314d48ca8145b2c6983419257c0486";
@@ -176,6 +178,7 @@ export default function Home() {
         height={784}
         className={styles.white_spot}
       />
+
       <div className={styles.header}>
         <div className={styles.logo}>
           <Image
@@ -242,7 +245,7 @@ export default function Home() {
               <GeneralButton
                 handleClick={() => {
                   setFilterIndex(0);
-                  setSortedData(last24HoursTimeData);
+                  setSortedData(data24Hours.leaderboard_ranking);
                   setSortedByItem("number");
                 }}
                 className={
@@ -256,7 +259,7 @@ export default function Home() {
               <GeneralButton
                 handleClick={() => {
                   setFilterIndex(1);
-                  setSortedData(allTimeData);
+                  setSortedData(dataAllTime.leaderboard_ranking);
                   setSortedByItem("number");
                 }}
                 className={
@@ -303,12 +306,12 @@ export default function Home() {
         <div>
           {sortedData.length === 0 ? (
             !loaded ? (
-              <>
+              <div className={styles.fetching}>
                 Fetching table data...
                 <div className="center-table-loading-anim loader-dots">
                   {/*{showLoadingAnimation && <LoadingDots />}*/}
                 </div>
-              </>
+              </div>
             ) : (
               <>
                 <div className="center-table-loading-anim loader-dots">
@@ -334,7 +337,7 @@ export default function Home() {
               onFilter={() => true}
               activeFilterIndex={0}
               filters={[]}
-              //  loaded={loaded}
+              loaded={loaded}
             />
           )}
         </div>

@@ -1,30 +1,7 @@
-const gql = String.raw;
+import { useMemo } from "react";
+import { gql, useQuery } from "@apollo/client";
 
-const jsonPost = async <
-  Req = { query: string },
-  Res = { data: Record<string, unknown> }
->(
-  url: string,
-  body: Req,
-  headers?: Record<string, string>
-): Promise<Res> => {
-  try {
-    const res = await fetch(url, {
-      headers: {
-        "Content-Type": "application/json",
-        ...(headers ? headers : {}),
-      },
-      method: "POST",
-      body: JSON.stringify(body),
-    });
-
-    return res.json();
-  } catch (e) {
-    throw new Error(`Could not parse JSON: ${e}`);
-  }
-};
-
-const queryLeaderboardRanking24Hours = gql`
+export const queryLeaderboardRanking24Hours = gql`
   query LeaderboardRanking {
     leaderboard_ranking(
       args: { i: "1 day", network_: "arbitrum" }
@@ -40,7 +17,7 @@ const queryLeaderboardRanking24Hours = gql`
   }
 `;
 
-const queryLeaderboardRankingAllTime = gql`
+export const queryLeaderboardRankingAllTime = gql`
   query LeaderboardRanking {
     leaderboard_ranking(
       args: { network_: "arbitrum" }
@@ -56,42 +33,54 @@ const queryLeaderboardRankingAllTime = gql`
   }
 `;
 
-const useLeaderboardRanking24Hours = () => {
-  const variables = {};
-  const url = "https://fluidity.hasura.app/v1/graphql";
-  const body = {
-    variables,
-    query: queryLeaderboardRanking24Hours,
-  };
+export const queryLeaderboardRanking24Hour = gql`
+  query LeaderboardRanking {
+    leaderboard_ranking(
+      args: { i: "1 day", network_: $network }
+      limit: 40
+      order_by: { number_of_transactions: desc }
+    ) {
+      address
+      number_of_transactions
+      rank
+      volume
+      yield_earned
+    }
+  }
+`;
 
-  return jsonPost(
-    url,
-    body,
-    process.env.FLU_HASURA_SECRET
-      ? {
-          "x-hasura-admin-secret": process.env.FLU_HASURA_SECRET,
-        }
-      : {}
-  );
+console.log(queryLeaderboardRanking24Hour);
+
+export type LeaderboardRanking = {
+  rank?: number;
+  address: string;
+  volume: string | number;
+  number_of_transactions: number;
+  yield_earned: string;
 };
 
-const useLeaderboardRankingAllTime = () => {
-  const variables = {};
-  const url = "https://fluidity.hasura.app/v1/graphql";
-  const body = {
-    variables,
-    query: queryLeaderboardRankingAllTime,
-  };
-
-  return jsonPost(
-    url,
-    body,
-    process.env.FLU_HASURA_SECRET
-      ? {
-          "x-hasura-admin-secret": process.env.FLU_HASURA_SECRET,
-        }
-      : {}
-  );
+export type LeaderboardRankingRes = {
+  leaderboard_ranking: LeaderboardRanking[];
 };
 
-export { useLeaderboardRanking24Hours, useLeaderboardRankingAllTime };
+const useLeaderboardRanking24Hours = (
+  onNext: (ranking: LeaderboardRankingRes) => void,
+  network: string
+) => {
+  const { query, options } = useMemo(
+    () => ({
+      query: queryLeaderboardRanking24Hour,
+      options: {
+        variables: {
+          network,
+        },
+        onCompleted: onNext,
+      },
+    }),
+    [network, onNext]
+  );
+
+  return useQuery(query, options);
+};
+
+export { useLeaderboardRanking24Hours };

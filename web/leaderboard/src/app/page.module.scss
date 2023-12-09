@@ -28,6 +28,8 @@ $gray: #999999;
   top: 388px;
   right: 0;
   z-index: 10;
+  object-fit: cover;
+  filter: blur(20px);
 }
 
 .header {
@@ -201,15 +203,42 @@ $gray: #999999;
   }
 }
 
+.fetching {
+  padding: 20px 50px;
+}
+
 .table_content {
   width: 100%;
   border-spacing: 0 0.25em;
+  border-collapse: collapse;
+  width: 100%;
+  display: table;
+  table-layout: fixed;
 
   .heading {
     color: $gray;
     font-weight: 500;
     font-size: 12px;
     line-height: 21px;
+  }
+
+  thead {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  tbody {
+    display: block;
+    width: 100%;
+    overflow-y: auto;
+    height: 700px;
+  }
+
+  tbody tr {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
   }
 }
 
